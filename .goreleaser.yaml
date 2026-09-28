@@ -9,13 +9,12 @@ builds:
     binary: clover2-cli
     goos: [linux]
     goarch: [amd64, arm64]
-    goarm: ["7"]
     ldflags:
-      - -s -w -X github.com/klever-coex/clover2-cli/internal/cliapp.Version={{.Version}}
+      - -s -w -X github.com/klever-coex/clover2-cli/internal/cliapp.Version={{ .Version }}
 
 archives:
   - formats: [binary]
-    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
 
 checksum:
   name_template: checksums.txt

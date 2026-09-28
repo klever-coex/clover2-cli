@@ -51,14 +51,14 @@ runs:
 
         curl --fail --location --silent --show-error \
           --header "Authorization: Bearer ${GH_TOKEN}" \
-          --output /tmp/clover2 "$url"
+          --output /tmp/clover2-cli "$url"
 
-        chmod 0755 /tmp/clover2
-        sudo install -m 0755 /tmp/clover2 /usr/local/bin/clover2
+        chmod 0755 /tmp/clover2-cli
+        sudo install -m 0755 /tmp/clover2-cli /usr/local/bin/clover2-cli
 
     - name: Verify
       id: verify
       shell: bash
       run: |
-        clover2 --version
-        echo "version=$(clover2 --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+        clover2-cli --version
+        echo "version=$(clover2-cli --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"

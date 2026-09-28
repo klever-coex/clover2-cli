@@ -1,0 +1,64 @@
+name: Install clover2
+description: >
+  Install the clover2 CLI on the runner: picks the release binary matching
+  the runner architecture (amd64/arm64) and puts it on PATH as `clover2`.
+
+inputs:
+  version:
+    description: 'Release version to install, without the v prefix (e.g. 0.1.0); "latest" by default'
+    required: false
+    default: latest
+  repo:
+    description: 'Repository to download the release from'
+    required: false
+    default: klever-coex/clover2-cli
+  token:
+    description: 'GitHub token for the download (needed for private releases)'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: 'Installed clover2 version'
+    value: ${{ steps.verify.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Detect runner architecture
+      id: arch
+      shell: bash
+      run: |
+        case "$(uname -m)" in
+          x86_64)  echo "arch=amd64" >> "$GITHUB_OUTPUT" ;;
+          aarch64) echo "arch=arm64" >> "$GITHUB_OUTPUT" ;;
+          *) echo "::error::unsupported runner architecture: $(uname -m)"; exit 1 ;;
+        esac
+
+    - name: Download release binary
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ inputs.repo }}
+        VERSION: ${{ inputs.version }}
+        ARCH: ${{ steps.arch.outputs.arch }}
+      run: |
+        if [[ "$VERSION" == "latest" ]]; then
+          url="https://github.com/${REPO}/releases/latest/download/clover2-cli-linux-${ARCH}"
+        else
+          url="https://github.com/${REPO}/releases/download/v${VERSION}/clover2-cli-linux-${ARCH}"
+        fi
+
+        curl --fail --location --silent --show-error \
+          --header "Authorization: Bearer ${GH_TOKEN}" \
+          --output /tmp/clover2 "$url"
+
+        chmod 0755 /tmp/clover2
+        sudo install -m 0755 /tmp/clover2 /usr/local/bin/clover2
+
+    - name: Verify
+      id: verify
+      shell: bash
+      run: |
+        clover2 --version
+        echo "version=$(clover2 --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"

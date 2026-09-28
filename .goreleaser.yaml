@@ -1,0 +1,35 @@
+version: 2
+
+project_name: clover2-cli
+
+builds:
+  - id: clover2-cli
+    main: ./cmd/clover2
+    binary: clover2
+    goos: [linux]
+    goarch: [amd64, arm64]
+    goarm: ["7"]
+    ldflags:
+      - -s -w -X github.com/klever-coex/clover2-cli/internal/cliapp.Version={{.Version}}
+
+archives:
+  - formats: [binary]
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+
+checksum:
+  name_template: checksums.txt
+
+nfpms:
+  - id: clover2-cli
+    package_name: clover2-cli
+    file_name_template: "{{ .ConventionalFileName }}"
+    maintainer: klever-coex
+    description: Clover2 platform manager CLI
+    homepage: https://github.com/klever-coex/clover2-cli
+    formats:
+      - deb
+    contents:
+      - src: packaging/clover2-agent@.service
+        dst: /usr/lib/systemd/system/clover2-agent@.service
+    scripts:
+      postinstall: packaging/deb/postinst

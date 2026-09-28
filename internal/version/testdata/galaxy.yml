@@ -1,0 +1,5 @@
+namespace: clover2
+name: fleet
+version: 2.0.0
+authors:
+  - klever

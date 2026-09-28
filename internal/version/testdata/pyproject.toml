@@ -1,0 +1,5 @@
+# comment preserved on write
+[project]
+name = "clover2-core"
+version = "1.2.3"  # trailing comment kept
+description = "Core package"

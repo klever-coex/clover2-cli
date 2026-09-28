@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+mkdir -p /usr/share/bash-completion/completions
+clover2 completion bash > /usr/share/bash-completion/completions/clover2 || true
+
+mkdir -p /usr/share/zsh/vendor-completions
+clover2 completion zsh > /usr/share/zsh/vendor-completions/_clover2 || true
+
+mkdir -p /usr/share/fish/vendor_completions.d
+clover2 completion fish > /usr/share/fish/vendor_completions.d/clover2.fish || true

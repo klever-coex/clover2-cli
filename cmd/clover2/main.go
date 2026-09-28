@@ -15,7 +15,7 @@ import (
 func main() {
 	var verbose int
 	root := &cobra.Command{
-		Use:           "clover2-cli",
+		Use:           "clover2",
 		Short:         "Clover2 platform manager: release pipeline and robot fleet",
 		Version:       cliapp.Version,
 		SilenceErrors: true,
@@ -24,8 +24,8 @@ func main() {
 
 	root.PersistentFlags().CountVarP(&verbose, "verbose", "v", "increase verbosity (-v: warnings, -vv: info, -vvv: debug)")
 	root.PersistentFlags().StringVar(&cliapp.RootOverride, "root", "",
-		"project root (must contain tooling/tooling.json; default: $CLOVER2_CLI_ROOT, else nearest parent)")
-	root.SetVersionTemplate("clover2-cli {{.Version}}\n")
+		"project root (must contain tooling/tooling.json; default: $CLOVER2_ROOT, else nearest parent)")
+	root.SetVersionTemplate("clover2 {{.Version}}\n")
 	root.PersistentPreRun = func(*cobra.Command, []string) { cliapp.SetLogLevel(verbose) }
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return cliapp.ExitErrorf(cliapp.ExitBadArgument, "%v", err)

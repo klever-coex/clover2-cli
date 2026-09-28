@@ -4,9 +4,9 @@ version: 2
 project_name: clover2-cli
 
 builds:
-  - id: clover2-cli
-    main: .
-    binary: clover2-cli
+  - id: clover2
+    main: ./cmd/clover2
+    binary: clover2
     goos: [linux]
     goarch: [amd64, arm64]
     ldflags:
@@ -18,6 +18,10 @@ archives:
 
 checksum:
   name_template: checksums.txt
+
+release:
+  extra_files:
+    - glob: install.sh
 
 nfpms:
   - id: clover2-cli

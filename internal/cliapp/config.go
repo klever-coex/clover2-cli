@@ -11,7 +11,7 @@ import (
 const (
 	ConfigDir  = "tooling"
 	ConfigFile = "tooling.json"
-	RootEnv    = "CLOVER2_CLI_ROOT"
+	RootEnv    = "CLOVER2_ROOT"
 )
 
 // Config is the typed view of tooling/tooling.json. Unknown keys are ignored.
@@ -26,7 +26,7 @@ type Config struct {
 	}
 }
 
-// Load finds the project root (--root, $CLOVER2_CLI_ROOT, or the nearest parent
+// Load finds the project root (--root, $CLOVER2_ROOT, or the nearest parent
 // directory containing tooling/tooling.json) and parses its config. An empty
 // root with a zero Config means "no project" — commands that need one error out.
 func Load() (string, Config, error) {

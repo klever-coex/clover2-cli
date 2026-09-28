@@ -16,7 +16,7 @@ set -eu
 REPO=${REPO:-klever-coex/clover2-cli}
 VERSION=${VERSION:-latest}
 INSTALL_DIR=${INSTALL_DIR:-/usr/local/bin}
-BIN_NAME=${BIN_NAME:-clover2-cli}
+BIN_NAME=${BIN_NAME:-clover2}
 GITHUB_URL=${GITHUB_URL:-https://github.com}
 
 info() {

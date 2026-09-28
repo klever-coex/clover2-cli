@@ -1,11 +1,9 @@
 name: Install clover2
-description: >
-  Install the clover2 CLI on the runner: picks the release binary matching
-  the runner architecture (amd64/arm64) and puts it on PATH as `clover2`.
+description: Install the clover2 CLI and optionally compose the project version.
 
 inputs:
   version:
-    description: 'Release version to install, without the v prefix (e.g. 0.1.0); "latest" by default'
+    description: 'Release version to install (e.g. 0.1.0), latest by default'
     required: false
     default: latest
   repo:
@@ -13,14 +11,27 @@ inputs:
     required: false
     default: klever-coex/clover2-cli
   token:
-    description: 'GitHub token for the download (needed for private releases)'
+    description: 'GitHub token for the download'
     required: false
     default: ${{ github.token }}
+  detect-version:
+    description: 'Also compose the project version into build_mode, git_hash and project_version outputs (needs tooling/tooling.json and fetched tags)'
+    required: false
+    default: false
 
 outputs:
   version:
-    description: 'Installed clover2 version'
+    description: 'Installed project version'
     value: ${{ steps.verify.outputs.version }}
+  build_mode:
+    description: 'Build mode (empty unless detect-version)'
+    value: ${{ steps.compose.outputs.build_mode }}
+  git_hash:
+    description: 'Short git hash (empty unless detect-version)'
+    value: ${{ steps.compose.outputs.git_hash }}
+  project_version:
+    description: 'Composed project version for the current ref (empty unless detect-version)'
+    value: ${{ steps.compose.outputs.version }}
 
 runs:
   using: composite
@@ -51,14 +62,27 @@ runs:
 
         curl --fail --location --silent --show-error \
           --header "Authorization: Bearer ${GH_TOKEN}" \
-          --output /tmp/clover2-cli "$url"
+          --output /tmp/clover2 "$url"
 
-        chmod 0755 /tmp/clover2-cli
-        sudo install -m 0755 /tmp/clover2-cli /usr/local/bin/clover2-cli
+        chmod 0755 /tmp/clover2
+        sudo install -m 0755 /tmp/clover2 /usr/local/bin/clover2
 
     - name: Verify
       id: verify
       shell: bash
       run: |
-        clover2-cli --version
-        echo "version=$(clover2-cli --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+        clover2 --version
+        echo "version=$(clover2 --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+    - name: Compose project version
+      id: compose
+      if: ${{ inputs.detect-version }}
+      shell: bash
+      env:
+        GITHUB_REF: ${{ github.ref }}
+      run: |
+        COMPOSE=$(clover2 version compose --root . --ref "$GITHUB_REF" --json)
+        echo "compose: ${COMPOSE}"
+        echo "build_mode=$(echo "${COMPOSE}" | jq -r .build_mode)" >> "$GITHUB_OUTPUT"
+        echo "git_hash=$(echo "${COMPOSE}" | jq -r .git_hash)" >> "$GITHUB_OUTPUT"
+        echo "version=$(echo "${COMPOSE}" | jq -r .version)" >> "$GITHUB_OUTPUT"

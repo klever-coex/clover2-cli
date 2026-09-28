@@ -1,11 +1,12 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
 
 project_name: clover2-cli
 
 builds:
   - id: clover2-cli
-    main: ./cmd/clover2
-    binary: clover2
+    main: .
+    binary: clover2-cli
     goos: [linux]
     goarch: [amd64, arm64]
     goarm: ["7"]

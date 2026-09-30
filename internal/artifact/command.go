@@ -157,7 +157,7 @@ func pushCmd() *cobra.Command {
 	}
 
 	cmd.Flags().String("key", "", "object key (default: file name)")
-	cmd.Flags().StringSlice("tag", nil, "object tag KEY=VALUE (repeatable)")
+	cmd.Flags().StringSliceVar(&tags, "tag", nil, "object tag KEY=VALUE (repeatable)")
 	addConnFlags(cmd)
 	cliapp.PayloadFlags(cmd)
 

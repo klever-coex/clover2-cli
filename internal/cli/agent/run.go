@@ -1,5 +1,3 @@
-// Package agent wires the "clover2 agent" command group to the agent server
-// in internal/agent.
 package agent
 
 import (
@@ -11,15 +9,6 @@ import (
 	core "github.com/klever-coex/clover2-cli/internal/agent"
 )
 
-// Command returns the "agent" command group.
-func Command() *cobra.Command {
-	group := &cobra.Command{Use: "agent", Short: "On-robot agent (localhost HTTP API)"}
-
-	group.AddCommand(runCmd(), installCmd())
-
-	return group
-}
-
 func runCmd() *cobra.Command {
 	var (
 		listen    string
@@ -28,7 +17,7 @@ func runCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "run",
-		Short: "Run the agent daemon (systemd unit: packaging/clover2-agent.service)",
+		Short: "Run the agent daemon (systemd unit installed via 'agent install')",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, stop := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
 			defer stop()

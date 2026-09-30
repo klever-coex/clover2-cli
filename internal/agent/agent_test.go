@@ -56,7 +56,7 @@ func TestHealthAuth(t *testing.T) {
 func TestEnsureToken(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "sub", "agent.token")
 
-	token, err := ensureToken(path)
+	token, err := EnsureToken(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestEnsureToken(t *testing.T) {
 	}
 
 	// second call reads the same token
-	token2, err := ensureToken(path)
+	token2, err := EnsureToken(path)
 	if err != nil {
 		t.Fatal(err)
 	}

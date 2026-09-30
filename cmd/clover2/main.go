@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/klever-coex/clover2-cli/internal/agent"
-	"github.com/klever-coex/clover2-cli/internal/artifact"
+	"github.com/klever-coex/clover2-cli/internal/cli/agent"
+	"github.com/klever-coex/clover2-cli/internal/cli/artifact"
+	"github.com/klever-coex/clover2-cli/internal/cli/version"
 	"github.com/klever-coex/clover2-cli/internal/cliapp"
-	"github.com/klever-coex/clover2-cli/internal/version"
 	"github.com/spf13/cobra"
 )
 

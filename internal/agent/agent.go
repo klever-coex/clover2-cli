@@ -1,3 +1,5 @@
+// Package agent implements the on-robot agent: an HTTP API used by the CLI
+// and tooling to query and operate the machine.
 package agent
 
 import (
@@ -11,25 +13,21 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
-
-	"github.com/spf13/cobra"
 
 	"github.com/klever-coex/clover2-cli/internal/cliapp"
 )
 
 const (
-	defaultListen = "127.0.0.1:7550"
+	DefaultListen = "127.0.0.1:7550"
 	authPrefix    = "Bearer "
 )
 
-// defaultTokenPath picks a per-user location so the systemd template unit
-// (clover2-agent@<user>) works without root-owned file conflicts.
-func defaultTokenPath() string {
+// DefaultTokenPath picks a per-user location so a per-user systemd template
+// unit (clover2-agent@<user>) works without root-owned file conflicts.
+func DefaultTokenPath() string {
 	if dir, err := os.UserConfigDir(); err == nil {
 		return filepath.Join(dir, "clover2", "agent.token")
 	}
@@ -38,65 +36,40 @@ func defaultTokenPath() string {
 
 var started = time.Now()
 
-func Command() *cobra.Command {
-	group := &cobra.Command{Use: "agent", Short: "On-robot agent (localhost HTTP API)"}
-
-	group.AddCommand(runCmd())
-
-	return group
-}
-
-func runCmd() *cobra.Command {
-	var (
-		listen    string
-		tokenFile string
-	)
-
-	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "Run the agent daemon (systemd unit: packaging/clover2-agent.service)",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			token, err := ensureToken(tokenFile)
-			if err != nil {
-				return err
-			}
-
-			slog.Info("agent token ready", "file", tokenFile)
-
-			if _, _, err := net.SplitHostPort(listen); err != nil {
-				return fmt.Errorf("bad --listen '%s': %w", listen, err)
-			}
-
-			srv := &http.Server{
-				Addr:              listen,
-				Handler:           mux(token),
-				ReadHeaderTimeout: 5 * time.Second,
-			}
-
-			ctx, stop := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
-			defer stop()
-
-			go func() {
-				<-ctx.Done()
-
-				shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-				defer cancel()
-				_ = srv.Shutdown(shutdownCtx)
-			}()
-
-			slog.Info("agent listening", "addr", srv.Addr, "api", "v1")
-			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				return err
-			}
-
-			return nil
-		},
+// Serve runs the agent HTTP server until ctx is cancelled: it loads (or
+// creates) the bearer token from tokenFile, then blocks serving requests.
+func Serve(ctx context.Context, listen, tokenFile string) error {
+	token, err := EnsureToken(tokenFile)
+	if err != nil {
+		return err
 	}
 
-	cmd.Flags().StringVar(&listen, "listen", defaultListen, "listen address (localhost by default; remote access goes through SSH tunnels)")
-	cmd.Flags().StringVar(&tokenFile, "token-file", defaultTokenPath(), "bearer token file (generated 0600 if missing)")
+	slog.Info("agent token ready", "file", tokenFile)
 
-	return cmd
+	if _, _, err := net.SplitHostPort(listen); err != nil {
+		return fmt.Errorf("bad listen address '%s': %w", listen, err)
+	}
+
+	srv := &http.Server{
+		Addr:              listen,
+		Handler:           mux(token),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	go func() {
+		<-ctx.Done()
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(shutdownCtx)
+	}()
+
+	slog.Info("agent listening", "addr", srv.Addr, "api", "v1")
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
 }
 
 func mux(token []byte) http.Handler {
@@ -134,8 +107,8 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// ensureToken reads the token file or creates it (32 random bytes, 0600).
-func ensureToken(path string) ([]byte, error) {
+// EnsureToken reads the token file or creates it (32 random bytes, 0600).
+func EnsureToken(path string) ([]byte, error) {
 	if token, err := os.ReadFile(path); err == nil && len(token) > 0 {
 		return []byte(token), nil
 	}

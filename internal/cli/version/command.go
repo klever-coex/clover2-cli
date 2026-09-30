@@ -1,15 +1,17 @@
+// Package version wires the "clover2 version" command group to the
+// versioning core in internal/version.
 package version
 
 import (
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/spf13/cobra"
 
 	"github.com/klever-coex/clover2-cli/internal/cliapp"
+	core "github.com/klever-coex/clover2-cli/internal/version"
 )
 
 func Command() *cobra.Command {
@@ -94,12 +96,12 @@ func statusCmd() *cobra.Command {
 				return err
 			}
 
-			canon, err := requireCanon(cfg)
+			canon, err := core.RequireCanon(cfg)
 			if err != nil {
 				return err
 			}
 
-			stores, err := Discover(root, cfg.Exclude)
+			stores, err := core.Discover(root, cfg.Exclude)
 			if err != nil {
 				return err
 			}
@@ -144,12 +146,12 @@ func initCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				return initCanon(cliapp.RootOverride, cfg, from)
+				return core.InitCanon(cliapp.RootOverride, cfg, from)
 			}
 
 			root, cfg, err := cliapp.Load()
 			if err == nil && root != "" {
-				return initCanon(root, cfg, from)
+				return core.InitCanon(root, cfg, from)
 			}
 
 			cwd, err := os.Getwd()
@@ -162,7 +164,7 @@ func initCmd() *cobra.Command {
 				return err
 			}
 
-			return initCanon(cwd, cfg, from)
+			return core.InitCanon(cwd, cfg, from)
 		},
 	}
 
@@ -186,22 +188,22 @@ func setCmd() *cobra.Command {
 				return cliapp.ExitErrorf(cliapp.ExitBadArgument, "invalid version '%s'", args[0])
 			}
 
-			target := bare(*parsed)
-			if err := writeCanonVersion(root, target.String()); err != nil {
+			target := core.Bare(*parsed)
+			if err := core.WriteCanonVersion(root, target.String()); err != nil {
 				return err
 			}
 
-			stores, err := Discover(root, cfg.Exclude)
+			stores, err := core.Discover(root, cfg.Exclude)
 			if err != nil {
 				return err
 			}
 
-			changed, err := changedStores(stores, target)
+			changed, err := core.ChangedStores(stores, target)
 			if err != nil {
 				return err
 			}
 
-			if err := Sync(stores, target); err != nil {
+			if err := core.Sync(stores, target); err != nil {
 				return err
 			}
 
@@ -227,22 +229,22 @@ func syncCmd() *cobra.Command {
 				return err
 			}
 
-			canon, err := requireCanon(cfg)
+			canon, err := core.RequireCanon(cfg)
 			if err != nil {
 				return err
 			}
 
-			stores, err := Discover(root, cfg.Exclude)
+			stores, err := core.Discover(root, cfg.Exclude)
 			if err != nil {
 				return err
 			}
 
-			changed, err := changedStores(stores, canon)
+			changed, err := core.ChangedStores(stores, canon)
 			if err != nil {
 				return err
 			}
 
-			if err := Sync(stores, canon); err != nil {
+			if err := core.Sync(stores, canon); err != nil {
 				return err
 			}
 
@@ -270,9 +272,9 @@ func bumpCmd() *cobra.Command {
 			var payload map[string]any
 			switch args[0] {
 			case "rc":
-				payload, err = BumpRC(root, cfg, base)
+				payload, err = core.BumpRC(root, cfg, base)
 			case "major", "minor", "patch":
-				payload, err = Bump(root, cfg, args[0])
+				payload, err = core.Bump(root, cfg, args[0])
 			default:
 				return fmt.Errorf("invalid bump field '%s' (want major, minor, patch or rc)", args[0])
 			}
@@ -305,7 +307,7 @@ func composeCmd() *cobra.Command {
 				return err
 			}
 
-			payload, err := Compose(root, cfg, ref, mode, latestRC, latestStable)
+			payload, err := core.Compose(root, cfg, ref, mode, latestRC, latestStable)
 			if err != nil {
 				return err
 			}
@@ -321,22 +323,4 @@ func composeCmd() *cobra.Command {
 	cliapp.PayloadFlags(cmd)
 
 	return cmd
-}
-
-// changedStores returns sorted references whose version differs from canon.
-func changedStores(stores []Store, canon semver.Version) ([]string, error) {
-	changed := []string{}
-	for _, s := range stores {
-		v, err := s.Read()
-		if err != nil {
-			return nil, err
-		}
-
-		if v.String() != canon.String() {
-			changed = append(changed, s.Reference())
-		}
-	}
-
-	sort.Strings(changed)
-	return changed, nil
 }

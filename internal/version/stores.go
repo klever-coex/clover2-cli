@@ -89,7 +89,7 @@ func (s pyProjectStore) Write(v semver.Version) error {
 		return fmt.Errorf("no version field in %s", s.path)
 	}
 
-	return replaceTomlValue(s.path, idx, "version", bare(v).String())
+	return replaceTomlValue(s.path, idx, "version", Bare(v).String())
 }
 
 func (s pyProjectStore) Reference() string { return "pyproject::" + s.Name() }
@@ -167,7 +167,7 @@ func (s npmStore) Write(v semver.Version) error {
 	// nested "version" keys stay untouched
 	var b strings.Builder
 	b.WriteString(text[:loc[4]])
-	b.WriteString(bare(v).String())
+	b.WriteString(Bare(v).String())
 	b.WriteString(text[loc[5]:])
 
 	return os.WriteFile(s.path, []byte(b.String()), 0o644)
@@ -235,7 +235,7 @@ func (s galaxyStore) Write(v semver.Version) error {
 	}
 
 	q := yamlQuoteStyle(m[2])
-	newText := galaxyVersionRe.ReplaceAllString(text, "${1}"+q+bare(v).String()+q+"${3}")
+	newText := galaxyVersionRe.ReplaceAllString(text, "${1}"+q+Bare(v).String()+q+"${3}")
 	return os.WriteFile(s.path, []byte(newText), 0o644)
 }
 
@@ -280,7 +280,7 @@ func (s rosStore) Write(v semver.Version) error {
 		return fmt.Errorf("no version field in %s", s.path)
 	}
 
-	newText := rosVersionRe.ReplaceAllString(text, `${1}<version>`+bare(v).String()+`</version>`)
+	newText := rosVersionRe.ReplaceAllString(text, `${1}<version>`+Bare(v).String()+`</version>`)
 	return os.WriteFile(s.path, []byte(newText), 0o644)
 }
 

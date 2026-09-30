@@ -1,25 +1,20 @@
+// Package artifact wires the "clover2 artifact" command group to the
+// artifact-store core in internal/artifact.
 package artifact
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/spf13/cobra"
 
+	core "github.com/klever-coex/clover2-cli/internal/artifact"
 	"github.com/klever-coex/clover2-cli/internal/cliapp"
 )
 
-const (
-	DefaultBucket = "clover2"
-	EndpointEnv   = "CLOVER2_S3_ENDPOINT"
-	AccessKeyEnv  = "CLOVER2_S3_ACCESS_KEY"
-	SecretKeyEnv  = "CLOVER2_S3_SECRET_KEY"
-	endpointHint  = "[artifact] endpoint in tooling.json"
-)
+const endpointHint = "[artifact] endpoint in tooling.json"
 
 func Command() *cobra.Command {
 	group := &cobra.Command{
@@ -33,8 +28,8 @@ func Command() *cobra.Command {
 }
 
 func addConnFlags(cmd *cobra.Command) {
-	cmd.Flags().String("endpoint", "", "MinIO endpoint host[:port] or URL (env: "+EndpointEnv+")")
-	cmd.Flags().String("bucket", "", "bucket (default: "+DefaultBucket+")")
+	cmd.Flags().String("endpoint", "", "MinIO endpoint host[:port] or URL (env: "+core.EndpointEnv+")")
+	cmd.Flags().String("bucket", "", "bucket (default: "+core.DefaultBucket+")")
 	cmd.Flags().Bool("insecure", false, "disable TLS (endpoint without a scheme)")
 }
 
@@ -50,7 +45,7 @@ func resolveConn(cmd *cobra.Command, cfg cliapp.Config, urlEndpoint string) (*mi
 	}
 
 	if endpoint == "" {
-		endpoint = os.Getenv(EndpointEnv)
+		endpoint = os.Getenv(core.EndpointEnv)
 	}
 
 	if endpoint == "" {
@@ -58,7 +53,7 @@ func resolveConn(cmd *cobra.Command, cfg cliapp.Config, urlEndpoint string) (*mi
 	}
 
 	if endpoint == "" {
-		return nil, "", "", fmt.Errorf("endpoint is not set (--endpoint, %s or %s)", EndpointEnv, endpointHint)
+		return nil, "", "", fmt.Errorf("endpoint is not set (--endpoint, %s or %s)", core.EndpointEnv, endpointHint)
 	}
 
 	bucket := bucketFlag
@@ -67,7 +62,7 @@ func resolveConn(cmd *cobra.Command, cfg cliapp.Config, urlEndpoint string) (*mi
 	}
 
 	if bucket == "" {
-		bucket = DefaultBucket
+		bucket = core.DefaultBucket
 	}
 
 	secure := true
@@ -79,41 +74,13 @@ func resolveConn(cmd *cobra.Command, cfg cliapp.Config, urlEndpoint string) (*mi
 		secure = false
 	}
 
-	host, sec := splitEndpoint(endpoint, secure)
-	client, err := minio.New(host, &minio.Options{
-		Creds:  credentials.NewStaticV4(os.Getenv(AccessKeyEnv), os.Getenv(SecretKeyEnv), ""),
-		Secure: sec,
-	})
+	host, sec := core.SplitEndpoint(endpoint, secure)
+	client, err := core.Client(host, sec)
 	if err != nil {
-		return nil, "", "", fmt.Errorf("bad endpoint '%s': %w", host, err)
+		return nil, "", "", err
 	}
 
 	return client, endpoint, bucket, nil
-}
-
-// splitEndpoint separates an optional URL scheme from the host part.
-func splitEndpoint(endpoint string, defaultSecure bool) (string, bool) {
-	if i := strings.Index(endpoint, "://"); i >= 0 {
-		return endpoint[i+3:], endpoint[:i] == "https"
-	}
-
-	return endpoint, defaultSecure
-}
-
-// parseObjectURL splits "<scheme>://<host>/<bucket>/<key>" as printed by push.
-func parseObjectURL(source string) (endpoint, bucket, key string, ok bool) {
-	i := strings.Index(source, "://")
-	if i < 0 {
-		return "", "", source, false
-	}
-
-	host, rest, _ := strings.Cut(source[i+3:], "/")
-	bucket, key, _ = strings.Cut(rest, "/")
-	if host == "" || bucket == "" || key == "" {
-		return "", "", "", false
-	}
-
-	return source[:i] + "://" + host, bucket, key, true
 }
 
 func pushCmd() *cobra.Command {
@@ -139,7 +106,7 @@ func pushCmd() *cobra.Command {
 				key = filepath.Base(args[0])
 			}
 
-			objectTags, err := parseTags(tags)
+			objectTags, err := core.ParseTags(tags)
 			if err != nil {
 				return err
 			}
@@ -175,7 +142,7 @@ func pullCmd() *cobra.Command {
 				return err
 			}
 
-			urlEndpoint, urlBucket, key, _ := parseObjectURL(args[0])
+			urlEndpoint, urlBucket, key, _ := core.ParseObjectURL(args[0])
 			client, _, bucket, err := resolveConn(cmd, cfg, urlEndpoint)
 			if err != nil {
 				return err
@@ -207,18 +174,4 @@ func pullCmd() *cobra.Command {
 	cliapp.PayloadFlags(cmd)
 
 	return cmd
-}
-
-func parseTags(raw []string) (map[string]string, error) {
-	tags := map[string]string{}
-	for _, item := range raw {
-		name, value, ok := strings.Cut(item, "=")
-		if !ok || name == "" {
-			return nil, fmt.Errorf("invalid tag '%s'; expected KEY=VALUE", item)
-		}
-
-		tags[name] = value
-	}
-
-	return tags, nil
 }

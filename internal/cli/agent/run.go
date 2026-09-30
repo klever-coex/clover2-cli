@@ -15,7 +15,7 @@ import (
 func Command() *cobra.Command {
 	group := &cobra.Command{Use: "agent", Short: "On-robot agent (localhost HTTP API)"}
 
-	group.AddCommand(runCmd())
+	group.AddCommand(runCmd(), installCmd())
 
 	return group
 }
@@ -38,7 +38,7 @@ func runCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&listen, "listen", core.DefaultListen, "listen address (localhost by default; remote access goes through SSH tunnels)")
-	cmd.Flags().StringVar(&tokenFile, "token-file", core.DefaultTokenPath(), "bearer token file (generated 0600 if missing)")
+	cmd.Flags().StringVar(&tokenFile, "token-file", "", "bearer token file (generated 0600 if missing; empty = serve WITHOUT auth)")
 
 	return cmd
 }

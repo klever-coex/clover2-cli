@@ -111,6 +111,15 @@ func parse(path string) (Config, error) {
 		Name:    raw.Project.Name,
 		Version: raw.Project.Version,
 		Exclude: raw.Version.Exclude,
+		Artifact: struct {
+			Endpoint string
+			Bucket   string
+			Secure   *bool
+		}{
+			Endpoint: raw.Artifact.Endpoint,
+			Bucket:   raw.Artifact.Bucket,
+			Secure:   raw.Artifact.Secure,
+		},
 	}, nil
 }
 

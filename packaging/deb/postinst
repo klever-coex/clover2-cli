@@ -1,6 +1,14 @@
 #!/bin/sh
 set -e
 
+# legacy per-user template instances from older packages
+systemctl disable --now 'clover2-agent@*.service' >/dev/null 2>&1 || true
+
+# install/start the agent unit; never fail the package install over it
+if ! clover2 agent install 2>&1; then
+    echo "warning: 'clover2 agent install' failed; run it manually as root" >&2
+fi
+
 mkdir -p /usr/share/bash-completion/completions
 clover2 completion bash > /usr/share/bash-completion/completions/clover2 || true
 

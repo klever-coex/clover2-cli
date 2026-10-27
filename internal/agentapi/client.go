@@ -7,19 +7,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
-// Client talks to an agent over HTTP. The zero value is not usable; build one
-// with NewClient. A token may be empty for agents running without auth.
 type Client struct {
 	base  string
 	token string
 	http  *http.Client
 }
 
-// NewClient builds a client for an agent at baseURL (e.g.
-// "http://192.168.11.1:7550"). token may be empty.
 func NewClient(baseURL, token string) *Client {
 	return &Client{
 		base:  strings.TrimSuffix(baseURL, "/"),
@@ -28,7 +25,6 @@ func NewClient(baseURL, token string) *Client {
 	}
 }
 
-// Health fetches the liveness payload and checks API compatibility.
 func (c *Client) Health(ctx context.Context) (Health, error) {
 	var h Health
 	if err := c.get(ctx, HealthRoute, &h); err != nil {
@@ -42,7 +38,6 @@ func (c *Client) Health(ctx context.Context) (Health, error) {
 	return h, nil
 }
 
-// Info fetches the machine description and checks API compatibility.
 func (c *Client) Info(ctx context.Context) (Info, error) {
 	var info Info
 	if err := c.get(ctx, InfoRoute, &info); err != nil {
@@ -54,15 +49,6 @@ func (c *Client) Info(ctx context.Context) (Info, error) {
 	}
 
 	return info, nil
-}
-
-// Exec runs argv on the agent machine. The context controls the overall call
-// deadline; req.TimeoutS bounds the command on the agent side.
-func (c *Client) Exec(ctx context.Context, req ExecRequest) (ExecResult, error) {
-	var res ExecResult
-	err := c.post(ctx, ExecRoute, req, &res)
-
-	return res, err
 }
 
 func (c *Client) get(ctx context.Context, route string, out any) error {
@@ -121,8 +107,30 @@ func (c *Client) do(req *http.Request, out any) error {
 	return nil
 }
 
-// decodeAPIError extracts the error envelope; a non-envelope body falls back
-// to a structured error carrying the raw text.
+func idRoute(pattern, id string) string {
+	return strings.Replace(pattern, "{id}", url.PathEscape(id), 1)
+}
+
+func (c *Client) DockerImages(ctx context.Context) (DockerImagesList, error) {
+	var out DockerImagesList
+	return out, c.get(ctx, DockerImagesRoute, &out)
+}
+
+func (c *Client) DockerImageInfo(ctx context.Context, id string) (DockerImageInfo, error) {
+	var out DockerImageInfo
+	return out, c.get(ctx, idRoute(DockerImageInfoPattern, id), &out)
+}
+
+func (c *Client) DockerContainers(ctx context.Context) (DockerContainersList, error) {
+	var out DockerContainersList
+	return out, c.get(ctx, DockerContainersRoute, &out)
+}
+
+func (c *Client) DockerContainerInfo(ctx context.Context, id string) (DockerContainerInfo, error) {
+	var out DockerContainerInfo
+	return out, c.get(ctx, idRoute(DockerContainerInfoPattern, id), &out)
+}
+
 func decodeAPIError(status int, data []byte) error {
 	var env errorEnvelope
 	if err := json.Unmarshal(data, &env); err == nil && env.Error.Code != "" {

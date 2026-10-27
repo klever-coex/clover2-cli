@@ -2,16 +2,13 @@ package agent
 
 import (
 	"crypto/subtle"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/klever-coex/clover2-cli/internal/agentapi"
+	"github.com/klever-coex/clover2-cli/internal/httpx"
 )
 
-// withAuth enforces bearer auth. It is applied to the whole handler chain,
-// so a new route cannot accidentally ship unprotected.
 func (s *server) withAuth(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const prefix = "Bearer "
@@ -27,7 +24,6 @@ func (s *server) withAuth(next http.Handler) http.HandlerFunc {
 	}
 }
 
-// withLogging logs one line per request: method, path, status, duration.
 func (s *server) withLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rec := &statusRecorder{ResponseWriter: w}
@@ -44,8 +40,6 @@ func (s *server) withLogging(next http.Handler) http.Handler {
 	})
 }
 
-// withRecovery converts handler panics into structured 500 responses instead
-// of dropped connections: the agent must survive its own bugs.
 func (s *server) withRecovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -76,13 +70,10 @@ func (r *statusRecorder) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
-// writeError emits the agentapi error envelope.
 func writeError(w http.ResponseWriter, status int, code, msg string) {
-	writeJSON(w, status, map[string]agentapi.Error{"error": {Code: code, Message: msg}})
+	httpx.WriteError(w, status, code, msg)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+	httpx.WriteJSON(w, status, v)
 }

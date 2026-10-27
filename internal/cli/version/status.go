@@ -10,7 +10,6 @@ import (
 	core "github.com/klever-coex/clover2-cli/internal/version"
 )
 
-// statusResult: table text for humans, structured object for --json.
 type storeRow struct {
 	Reference string `json:"reference"`
 	Version   string `json:"version"`

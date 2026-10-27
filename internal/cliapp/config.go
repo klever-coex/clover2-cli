@@ -24,11 +24,12 @@ type Config struct {
 		Bucket   string
 		Secure   *bool // nil means true
 	}
+	Agent struct {
+		URL       string // remote agent base URL, e.g. http://192.168.1.10:7550
+		TokenFile string // bearer token file for the agent
+	}
 }
 
-// Load finds the project root (--root, $CLOVER2_ROOT, or the nearest parent
-// directory containing tooling/tooling.json) and parses its config. An empty
-// root with a zero Config means "no project" — commands that need one error out.
 func Load() (string, Config, error) {
 	if RootOverride != "" {
 		return loadExplicit(RootOverride)
@@ -67,8 +68,6 @@ func loadExplicit(dir string) (string, Config, error) {
 	return dir, cfg, err
 }
 
-// LoadDir parses the config under dir; a missing file yields a zero Config.
-// Used by commands that may create the config (version init).
 func LoadDir(dir string) (Config, error) {
 	if !isProject(dir) {
 		return Config{}, nil
@@ -96,6 +95,10 @@ func parse(path string) (Config, error) {
 			Bucket   string `json:"bucket"`
 			Secure   *bool  `json:"secure"`
 		} `json:"artifact"`
+		Agent struct {
+			URL       string `json:"url"`
+			TokenFile string `json:"token_file"`
+		} `json:"agent"`
 	}
 
 	data, err := os.ReadFile(path)
@@ -120,10 +123,16 @@ func parse(path string) (Config, error) {
 			Bucket:   raw.Artifact.Bucket,
 			Secure:   raw.Artifact.Secure,
 		},
+		Agent: struct {
+			URL       string
+			TokenFile string
+		}{
+			URL:       raw.Agent.URL,
+			TokenFile: raw.Agent.TokenFile,
+		},
 	}, nil
 }
 
-// ConfigPath returns the config file path under a project root.
 func ConfigPath(root string) string {
 	return filepath.Join(root, ConfigDir, ConfigFile)
 }

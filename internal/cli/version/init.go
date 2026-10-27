@@ -21,8 +21,6 @@ func initCmd() *cobra.Command {
 				return fmt.Errorf("--from <store::name> is required, e.g. --from ros::clover2")
 			}
 
-			// init may create the config, so a missing tooling.json is fine:
-			// use --root, else an existing project found upwards, else cwd.
 			if cliapp.RootOverride != "" {
 				cfg, err := cliapp.LoadDir(cliapp.RootOverride)
 				if err != nil {

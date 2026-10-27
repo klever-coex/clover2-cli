@@ -1,5 +1,3 @@
-// Package cli assembles the clover2 root command from the command groups;
-// each group lives in its own subpackage, one file per command.
 package cli
 
 import (
@@ -7,11 +5,11 @@ import (
 
 	"github.com/klever-coex/clover2-cli/internal/cli/agent"
 	"github.com/klever-coex/clover2-cli/internal/cli/artifact"
+	"github.com/klever-coex/clover2-cli/internal/cli/docker"
 	"github.com/klever-coex/clover2-cli/internal/cli/version"
 	"github.com/klever-coex/clover2-cli/internal/cliapp"
 )
 
-// NewCommand builds the root "clover2" command.
 func NewCommand() *cobra.Command {
 	var verbose int
 
@@ -31,7 +29,11 @@ func NewCommand() *cobra.Command {
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return cliapp.ExitErrorf(cliapp.ExitBadArgument, "%v", err)
 	})
-	root.AddCommand(version.Command(), artifact.Command(), agent.Command())
+
+	root.AddCommand(agent.Command())
+	root.AddCommand(artifact.Command())
+	root.AddCommand(docker.Command())
+	root.AddCommand(version.Command())
 
 	return root
 }

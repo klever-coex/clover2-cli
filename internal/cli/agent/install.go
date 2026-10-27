@@ -56,14 +56,10 @@ func installCmd() *cobra.Command {
 	return cmd
 }
 
-// installAgent writes the token and unit, then enables and starts the
-// service. Idempotent: safe to re-run on upgrades and to repair.
 func installAgent(u *user.User) error {
 	uid, _ := strconv.Atoi(u.Uid)
 	gid, _ := strconv.Atoi(u.Gid)
 
-	// Token must be readable by the agent user: generate when missing
-	// (fatal on unreadable/empty), then hand it over.
 	if _, err := core.EnsureToken(core.DefaultTokenFile); err != nil {
 		return err
 	}
@@ -76,8 +72,6 @@ func installAgent(u *user.User) error {
 		return err
 	}
 
-	// Best-effort systemctl: inside image builds there is no running PID 1,
-	// enable still lays down the boot symlink there.
 	for _, args := range [][]string{
 		{"daemon-reload"},
 		{"enable", unitName},
@@ -112,9 +106,6 @@ WantedBy=multi-user.target
 `, userName, listenLan, core.DefaultTokenFile)
 }
 
-// firstLoginUser returns the first regular (uid>=1000) user from
-// /etc/passwd — the robot owner on a stock image.
-// ponytail: first uid>=1000; pass --user explicitly on multi-user boxes.
 func firstLoginUser() (string, error) {
 	data, err := os.ReadFile("/etc/passwd")
 	if err != nil {

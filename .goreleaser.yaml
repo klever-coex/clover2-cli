@@ -32,8 +32,5 @@ nfpms:
     homepage: https://github.com/klever-coex/clover2-cli
     formats:
       - deb
-    contents:
-      - src: packaging/clover2-agent@.service
-        dst: /usr/lib/systemd/system/clover2-agent@.service
     scripts:
       postinstall: packaging/deb/postinst

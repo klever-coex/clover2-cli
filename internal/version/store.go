@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -123,8 +124,8 @@ func Sync(stores []Store, v semver.Version) error {
 	return nil
 }
 
-// bare strips prerelease/build with a warning: stores keep bare versions only.
-func bare(v semver.Version) semver.Version {
+// Bare strips prerelease/build with a warning: stores keep bare versions only.
+func Bare(v semver.Version) semver.Version {
 	if v.Prerelease() != "" || v.Metadata() != "" {
 		slog.Warn("version carries a suffix; stores keep bare versions only", "version", v)
 	}
@@ -158,4 +159,22 @@ func parseStrict(s string) (semver.Version, error) {
 	}
 
 	return *v, nil
+}
+
+// ChangedStores returns sorted references whose version differs from canon.
+func ChangedStores(stores []Store, canon semver.Version) ([]string, error) {
+	changed := []string{}
+	for _, s := range stores {
+		v, err := s.Read()
+		if err != nil {
+			return nil, err
+		}
+
+		if v.String() != canon.String() {
+			changed = append(changed, s.Reference())
+		}
+	}
+
+	sort.Strings(changed)
+	return changed, nil
 }

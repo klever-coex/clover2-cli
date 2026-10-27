@@ -1,0 +1,39 @@
+package cli
+
+import (
+	"github.com/spf13/cobra"
+
+	"github.com/klever-coex/clover2-cli/internal/cli/agent"
+	"github.com/klever-coex/clover2-cli/internal/cli/artifact"
+	"github.com/klever-coex/clover2-cli/internal/cli/docker"
+	"github.com/klever-coex/clover2-cli/internal/cli/version"
+	"github.com/klever-coex/clover2-cli/internal/cliapp"
+)
+
+func NewCommand() *cobra.Command {
+	var verbose int
+
+	root := &cobra.Command{
+		Use:           "clover2",
+		Short:         "Clover2 platform manager: release pipeline and robot fleet",
+		Version:       cliapp.Version,
+		SilenceErrors: true,
+		SilenceUsage:  true,
+	}
+
+	root.PersistentFlags().CountVarP(&verbose, "verbose", "v", "increase verbosity (-v: warnings, -vv: info, -vvv: debug)")
+	root.PersistentFlags().StringVar(&cliapp.RootOverride, "root", "",
+		"project root (must contain tooling/tooling.json; default: $CLOVER2_ROOT, else nearest parent)")
+	root.SetVersionTemplate("clover2 {{.Version}}\n")
+	root.PersistentPreRun = func(*cobra.Command, []string) { cliapp.SetLogLevel(verbose) }
+	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
+		return cliapp.ExitErrorf(cliapp.ExitBadArgument, "%v", err)
+	})
+
+	root.AddCommand(agent.Command())
+	root.AddCommand(artifact.Command())
+	root.AddCommand(docker.Command())
+	root.AddCommand(version.Command())
+
+	return root
+}

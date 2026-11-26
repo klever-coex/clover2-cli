@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/klever-coex/clover2-cli/internal/agent/docker"
 	"github.com/klever-coex/clover2-cli/internal/agent/system"
 	"github.com/klever-coex/clover2-cli/internal/agentapi"
 	"github.com/klever-coex/clover2-cli/internal/cliapp"
@@ -35,10 +34,9 @@ type Options struct {
 }
 
 type server struct {
-	opts          Options
-	dockerHandler *docker.Handler
-	system        *system.Handler
-	caps          *capabilitySet
+	opts   Options
+	system *system.Handler
+	caps   *capabilitySet
 }
 
 func New(opts Options, cli *client.Client) *server {
@@ -51,10 +49,9 @@ func New(opts Options, cli *client.Client) *server {
 	}
 
 	s := &server{
-		opts:          opts,
-		dockerHandler: docker.NewHandler(cli),
+		opts: opts,
 	}
-	s.caps = newCapabilitySet(s.dockerHandler.IsHealthy)
+
 	s.system = system.NewHandler(opts.Version, opts.Started, s.caps.snapshot)
 
 	return s
@@ -63,7 +60,6 @@ func New(opts Options, cli *client.Client) *server {
 func (s *server) Handler() http.Handler {
 	m := http.NewServeMux()
 	s.system.Register(m)
-	s.dockerHandler.Register(m)
 
 	var h http.Handler = m
 	if len(s.opts.Token) > 0 {

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package clover2.robot.v1;
+
+option go_package = "github.com/klever-coex/clover2-cli/protocol/gen/go/clover2/robot/v1;robotv1";
+
+message RequestMeta {
+  string request_id = 1;
+}
+
+message ResponseMeta {
+  string request_id = 1;
+}

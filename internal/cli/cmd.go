@@ -5,7 +5,6 @@ import (
 
 	"github.com/klever-coex/clover2-cli/internal/cli/agent"
 	"github.com/klever-coex/clover2-cli/internal/cli/artifact"
-	"github.com/klever-coex/clover2-cli/internal/cli/docker"
 	"github.com/klever-coex/clover2-cli/internal/cli/version"
 	"github.com/klever-coex/clover2-cli/internal/cliapp"
 )
@@ -32,7 +31,6 @@ func NewCommand() *cobra.Command {
 
 	root.AddCommand(agent.Command())
 	root.AddCommand(artifact.Command())
-	root.AddCommand(docker.Command())
 	root.AddCommand(version.Command())
 
 	return root

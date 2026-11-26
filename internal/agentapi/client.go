@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -105,30 +104,6 @@ func (c *Client) do(req *http.Request, out any) error {
 	}
 
 	return nil
-}
-
-func idRoute(pattern, id string) string {
-	return strings.Replace(pattern, "{id}", url.PathEscape(id), 1)
-}
-
-func (c *Client) DockerImages(ctx context.Context) (DockerImagesList, error) {
-	var out DockerImagesList
-	return out, c.get(ctx, DockerImagesRoute, &out)
-}
-
-func (c *Client) DockerImageInfo(ctx context.Context, id string) (DockerImageInfo, error) {
-	var out DockerImageInfo
-	return out, c.get(ctx, idRoute(DockerImageInfoPattern, id), &out)
-}
-
-func (c *Client) DockerContainers(ctx context.Context) (DockerContainersList, error) {
-	var out DockerContainersList
-	return out, c.get(ctx, DockerContainersRoute, &out)
-}
-
-func (c *Client) DockerContainerInfo(ctx context.Context, id string) (DockerContainerInfo, error) {
-	var out DockerContainerInfo
-	return out, c.get(ctx, idRoute(DockerContainerInfoPattern, id), &out)
 }
 
 func decodeAPIError(status int, data []byte) error {

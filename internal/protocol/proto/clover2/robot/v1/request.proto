@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package clover2.robot.v1;
+
+option go_package = "github.com/klever-coex/clover2-cli/protocol/gen/go/clover2/robot/v1;robotv1";
+
+import "clover2/robot/v1/common.proto";
+
+message Request {
+  RequestMeta meta = 1;
+
+  oneof command {
+    HostnameGetRequest hostname_get = 10;
+    HostnameSetRequest hostname_set = 11;
+
+    BluetoothStatusRequest bluetooth_status = 20;
+  }
+}

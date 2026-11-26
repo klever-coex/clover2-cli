@@ -202,7 +202,7 @@ func TestChangedStores(t *testing.T) {
 	}
 	stores := []Store{write("b.xml", "2.0.0"), write("a.xml", "1.0.0")}
 
-	changed, err := changedStores(stores, parseStrict2(t, "1.0.0"))
+	changed, err := ChangedStores(stores, parseStrict2(t, "1.0.0"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +224,7 @@ func TestWriteCanonVariants(t *testing.T) {
 	// creates the file when it does not exist
 	dir := t.TempDir()
 	os.MkdirAll(filepath.Join(dir, cliapp.ConfigDir), 0o755)
-	if err := writeCanonVersion(dir, "3.2.1"); err != nil {
+	if err := WriteCanonVersion(dir, "3.2.1"); err != nil {
 		t.Fatal(err)
 	}
 	if cfg, err := cliapp.LoadDir(dir); err != nil || cfg.Version != "3.2.1" {
@@ -238,7 +238,7 @@ func TestWriteCanonVariants(t *testing.T) {
 	if err := os.WriteFile(cliapp.ConfigPath(dir2), []byte(src), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := writeCanonVersion(dir2, "3.2.1"); err != nil {
+	if err := WriteCanonVersion(dir2, "3.2.1"); err != nil {
 		t.Fatal(err)
 	}
 	data, _ := os.ReadFile(cliapp.ConfigPath(dir2))

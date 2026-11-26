@@ -10,6 +10,7 @@ const (
 	ExitNoProject   ExitCode = 3 // no/invalid tooling/tooling.json
 	ExitBadArgument ExitCode = 4 // invalid flag, field or command argument
 	ExitNetwork     ExitCode = 5 // network/storage failure (artifact push/pull, robots unreachable)
+	ExitNotFound    ExitCode = 6 // requested agent-side object does not exist
 )
 
 type Error struct {

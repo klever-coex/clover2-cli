@@ -87,6 +87,42 @@ func TestEmitPayload(t *testing.T) {
 	if got := ExitCodeOf(t, err); got != ExitBadArgument {
 		t.Errorf("mutually exclusive code = %v", got)
 	}
+
+	// --format json: same as --json
+	got, err = runEmit(t, p, "--format", "json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != `{"base":"1.2.3","tag":"v1.2.3"}`+"\n" {
+		t.Errorf("format json = %q", got)
+	}
+
+	// --format yaml
+	got, err = runEmit(t, p, "--format", "yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "base: 1.2.3\ntag: v1.2.3\n" {
+		t.Errorf("format yaml = %q", got)
+	}
+
+	// --json + --format: coded error
+	_, err = runEmit(t, p, "--json", "--format", "yaml")
+	if got := ExitCodeOf(t, err); got != ExitBadArgument {
+		t.Errorf("json+format code = %v", got)
+	}
+
+	// --field with non-text format: coded error
+	_, err = runEmit(t, p, "--format", "yaml", "--field", "tag")
+	if got := ExitCodeOf(t, err); got != ExitBadArgument {
+		t.Errorf("field+yaml code = %v", got)
+	}
+
+	// invalid format: coded error
+	_, err = runEmit(t, p, "--format", "xml")
+	if got := ExitCodeOf(t, err); got != ExitBadArgument {
+		t.Errorf("invalid format code = %v", got)
+	}
 }
 
 func TestEmitTypedResult(t *testing.T) {

@@ -28,7 +28,7 @@ func parseTag(tag string) (semver.Version, error) {
 	return v, nil
 }
 
-func initCanon(root string, cfg cliapp.Config, from string) error {
+func InitCanon(root string, cfg cliapp.Config, from string) error {
 	if cfg.Version != "" {
 		return fmt.Errorf("canonical version already set to %s (use 'version set' to change)", cfg.Version)
 	}
@@ -48,10 +48,10 @@ func initCanon(root string, cfg cliapp.Config, from string) error {
 		return err
 	}
 
-	return writeCanonVersion(root, bare(v).String())
+	return WriteCanonVersion(root, Bare(v).String())
 }
 
-func requireCanon(cfg cliapp.Config) (semver.Version, error) {
+func RequireCanon(cfg cliapp.Config) (semver.Version, error) {
 	if cfg.Version == "" {
 		return semver.Version{}, fmt.Errorf("no canonical version in tooling.json (project.version); run 'clover2 version init'")
 	}
@@ -60,7 +60,7 @@ func requireCanon(cfg cliapp.Config) (semver.Version, error) {
 
 // writeCanonVersion sets project.version in tooling/tooling.json, preserving
 // every other key (including unknown ones).
-func writeCanonVersion(root, version string) error {
+func WriteCanonVersion(root, version string) error {
 	path := cliapp.ConfigPath(root)
 
 	var data map[string]any
@@ -103,7 +103,7 @@ func writeCanonVersion(root, version string) error {
 
 // Bump bumps the canonical version and syncs all stores.
 func Bump(root string, cfg cliapp.Config, field string) (map[string]any, error) {
-	current, err := requireCanon(cfg)
+	current, err := RequireCanon(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func Bump(root string, cfg cliapp.Config, field string) (map[string]any, error) 
 		return nil, err
 	}
 
-	if err := writeCanonVersion(root, target.String()); err != nil {
+	if err := WriteCanonVersion(root, target.String()); err != nil {
 		return nil, err
 	}
 
@@ -134,7 +134,7 @@ func Bump(root string, cfg cliapp.Config, field string) (map[string]any, error) 
 }
 
 func BumpRC(root string, cfg cliapp.Config, baseField string) (map[string]any, error) {
-	current, err := requireCanon(cfg)
+	current, err := RequireCanon(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func BumpRC(root string, cfg cliapp.Config, baseField string) (map[string]any, e
 			return nil, err
 		}
 
-		if err := writeCanonVersion(root, target.String()); err != nil {
+		if err := WriteCanonVersion(root, target.String()); err != nil {
 			return nil, err
 		}
 
@@ -216,7 +216,7 @@ func Compose(root string, cfg cliapp.Config, ref, mode string, latestRC, latestS
 		return latestTag(root, latestRC)
 	}
 
-	base, err := requireCanon(cfg)
+	base, err := RequireCanon(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +338,7 @@ func latestTag(root string, rc bool) (map[string]any, error) {
 
 	version := best.v
 	if rc {
-		version = bare(version)
+		version = Bare(version)
 	}
 
 	hash, err := gitCommitOf(root, best.name)

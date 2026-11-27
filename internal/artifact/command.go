@@ -118,6 +118,7 @@ func parseObjectURL(source string) (endpoint, bucket, key string, ok bool) {
 
 func pushCmd() *cobra.Command {
 	var tags []string
+	var hideProgress bool
 
 	cmd := &cobra.Command{
 		Use:   "push PATH",
@@ -144,7 +145,16 @@ func pushCmd() *cobra.Command {
 				return err
 			}
 
-			if _, err := client.FPutObject(cmd.Context(), bucket, key, args[0], minio.PutObjectOptions{UserTags: objectTags}); err != nil {
+			path := args[0]
+			options := minio.PutObjectOptions{UserTags: objectTags}
+			if !hideProgress {
+				info, err := os.Stat(path)
+				if err != nil {
+					return cliapp.ExitErrorf(cliapp.ExitNetwork, "upload failed: %v", err)
+				}
+				options.Progress = newProgressBar(info.Size())
+			}
+			if _, err := client.FPutObject(cmd.Context(), bucket, key, args[0], options); err != nil {
 				return cliapp.ExitErrorf(cliapp.ExitNetwork, "upload failed: %v", err)
 			}
 
@@ -158,6 +168,7 @@ func pushCmd() *cobra.Command {
 
 	cmd.Flags().String("key", "", "object key (default: file name)")
 	cmd.Flags().StringSliceVar(&tags, "tag", nil, "object tag KEY=VALUE (repeatable)")
+	cmd.Flags().BoolVar(&hideProgress, "no-progress", false, "hide upload progressbar")
 	addConnFlags(cmd)
 	cliapp.PayloadFlags(cmd)
 

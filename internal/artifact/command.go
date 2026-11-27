@@ -154,7 +154,7 @@ func pushCmd() *cobra.Command {
 				}
 				options.Progress = newProgressBar(info.Size())
 			}
-			if _, err := client.FPutObject(cmd.Context(), bucket, key, args[0], options); err != nil {
+			if _, err := client.FPutObject(cmd.Context(), bucket, key, path, options); err != nil {
 				return cliapp.ExitErrorf(cliapp.ExitNetwork, "upload failed: %v", err)
 			}
 
